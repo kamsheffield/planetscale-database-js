@@ -40,7 +40,11 @@ type Req = {
   method: string
   headers: Record<string, string>
   body: string
-  cache?: RequestCache
+  // cache?: RequestCache
+  // TODO: Reimplement cache when it is available on Cloudflare Workers
+  // issue: https://github.com/planetscale/database-js/issues/101
+  // change: https://github.com/planetscale/database-js/pull/102
+  // bug: https://github.com/cloudflare/workerd/issues/698
 }
 
 type Res = {
@@ -259,16 +263,29 @@ export class Connection {
 async function postJSON<T>(config: Config, url: string | URL, body = {}): Promise<T> {
   const auth = btoa(`${config.username}:${config.password}`)
   const { fetch } = config
-  const response = await fetch(url.toString(), {
-    method: 'POST',
-    body: JSON.stringify(body),
-    headers: {
-      'Content-Type': 'application/json',
-      'User-Agent': `database-js/${Version}`,
-      Authorization: `Basic ${auth}`
-    },
-    cache: 'no-store'
-  })
+
+  // Add additional error handling logic to fetch
+  // to allow us to throw a more specific error if there is one.
+  let response
+  try {
+    response = await fetch(url.toString(), {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': `database-js/${Version}`,
+        Authorization: `Basic ${auth}`
+      },
+      // cache: 'no-store'
+      // TODO reimplement cache when it is available on cloudlfare, see above.
+    })
+  } catch (error) {
+    if (error.cause) {
+      throw error.cause
+    } else {
+      throw error
+    }
+  }
 
   if (response.ok) {
     return await response.json()
