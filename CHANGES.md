@@ -50,3 +50,10 @@ See the README.md for more information.
 * Fix any conflicts as needed.
 * Run the build and the tests to ensure everything seems to be working.
 * Merge the changes into `typeorm-cloudflare`.
+
+### Distribution
+
+* Create new release tag
+* `npm test`
+* `npm pack`
+* Upload package to github
